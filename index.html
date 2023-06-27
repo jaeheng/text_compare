@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>文本对比小工具</title>
+    <script src="./vue.global.js"></script>
+    <style>
+        #app {
+            width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            padding: 2em 0;
+        }
+
+        .row {
+            display: flex;
+        }
+
+        .err {
+            color: #f00;
+            position: relative;
+            top: 10px
+        }
+
+        .result {
+            font-family: sans-serif;
+        }
+
+        textarea {
+            border: 1px solid #eee;
+            outline: none;
+            width: 500px;
+            height: 300px;
+            background: #fafafa;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        textarea:focus {
+            border-color: #1bc0c4;
+            background: #f3f3f3;
+        }
+
+        .result {
+            font-family: monospace;
+            width: 100%;
+            border: 1px solid #ccc;
+            padding: 20px;
+            box-sizing: border-box;
+            white-space: nowrap;
+            overflow: auto;
+            line-height: 3;
+            color: #1bc0c4;
+            font-size: 16px;
+        }
+
+        .action {
+            padding-top: 10px;
+            color: #333;
+        }
+
+        .radio span {
+            cursor: pointer;
+            background: #eee;
+            padding: 3px 10px;
+        }
+
+        .radio span.active {
+            background: #1bc0c4;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <h1>文本对比小工具</h1>
+    <div class="row">
+        <textarea
+                v-model="t1"
+                cols="30"
+                rows="10"
+                placeholder="文本1"></textarea>
+        <textarea
+                v-model="t2"
+                cols="30"
+                rows="10"
+                placeholder="文本2"></textarea>
+    </div>
+    <div class="action">
+        <div class="radio">
+            检查大小写
+            <span :class="{ active: type }"
+                  @click="type = true">是</span>
+            <span :class="{ active: !type }"
+                  @click="type = false">否</span>
+        </div>
+    </div>
+
+    <h3>对比结果</h3>
+    <div class="result">
+        <span v-if="!t1_dom">请输入文本进行对比</span>
+        <div class="t1">
+            <span v-for="item in t1_dom.split('')">{{ item }}</span>
+        </div>
+        <div class="t2" v-html="t2_dom"></div>
+    </div>
+</div>
+
+<script>
+    const {createApp} = Vue
+
+    createApp({
+        data() {
+            return {
+                type: true,
+                t1: '',
+                t2: ''
+            }
+        },
+        computed: {
+            t1_dom() {
+                return this.t1.split("")
+                    .filter(item => item.trim())
+                    .join("")
+            },
+            t2_dom() {
+                var t1 = this.t1.split("")
+                    .filter(item => item.trim())
+                    .join("")
+                var t2 = this.t2.split("")
+                    .filter(item => item.trim())
+                    .join("")
+                var t2_result = []
+                t1.split('').map((item, index) => {
+                    var tag = this.type ?
+                        t2[index] === item :
+                        (t2[index] && t2[index].toLowerCase() === item.toLowerCase())
+                    if (tag) {
+                        t2_result.push(`<span>${t2[index]}</span>`)
+                    } else {
+                        t2_result.push(`<span class="err">${t2[index] || '-'}</span>`)
+                    }
+                })
+                if (t2.length > t1.length) {
+                    var other = t2.substring(t1.length)
+                    t2_result.push("<span class='err'>" + other + "</span>")
+                }
+                return t2_result.join("")
+            }
+        }
+    }).mount('#app')
+</script>
+</body>
+</html>
