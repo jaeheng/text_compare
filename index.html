@@ -1,9 +1,10 @@
 <!doctype html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>文本对比小工具</title>
     <script src="./vue.global.js"></script>
@@ -63,6 +64,8 @@
         .action {
             padding-top: 10px;
             color: #333;
+            margin-bottom: 30px;
+
         }
 
         .radio span {
@@ -75,86 +78,132 @@
             background: #1bc0c4;
             color: #fff;
         }
+
+        .word-count {
+            padding: 0;
+        }
+
+        .word-count li {
+            margin: 0;
+            line-height: 1;
+            list-style: none;
+            padding: 5px 0;
+        }
     </style>
 </head>
+
 <body>
-<div id="app">
-    <h1>文本对比小工具</h1>
-    <div class="row">
-        <textarea
-                v-model="t1"
-                cols="30"
-                rows="10"
-                placeholder="文本1"></textarea>
-        <textarea
-                v-model="t2"
-                cols="30"
-                rows="10"
-                placeholder="文本2"></textarea>
-    </div>
-    <div class="action">
-        <div class="radio">
-            检查大小写
-            <span :class="{ active: type }"
-                  @click="type = true">是</span>
-            <span :class="{ active: !type }"
-                  @click="type = false">否</span>
+    <div id="app">
+        <h1>文本对比小工具</h1>
+        <div class="row">
+            <textarea v-model="t1" cols="30" rows="10" placeholder="文本1"></textarea>
+            <textarea v-model="t2" cols="30" rows="10" placeholder="文本2"></textarea>
+        </div>
+        <div class="action">
+            <div class="radio">
+                检查大小写
+                <span :class="{ active: type }" @click="type = true">是</span>
+                <span :class="{ active: !type }" @click="type = false">否</span>
+            </div>
+        </div>
+
+        <h3>对比结果</h3>
+        <div class="result">
+            <span v-if="!t1_dom">请输入文本进行对比</span>
+            <div class="t1">
+                <span v-for="item in t1_dom.split('')">{{ item }}</span>
+            </div>
+            <div class="t2" v-html="t2_dom"></div>
+        </div>
+
+        <h3>文本1字符统计</h3>
+        <div class="action">
+            <div class="radio">
+                排序方式
+                <span :class="{ active: !sortType }" @click="sortType = false">按数量排序</span>
+                <span :class="{ active: sortType }" @click="sortType = true">按字符排序</span>
+            </div>
+        </div>
+        <div class="result">
+            <ul class="word-count" v-if="statistic.length > 0">
+                <li v-for="v of statistic">{{v.name}}: {{v.count}}</li>
+            </ul>
+            <span v-else>请输入文本1</span>
         </div>
     </div>
 
-    <h3>对比结果</h3>
-    <div class="result">
-        <span v-if="!t1_dom">请输入文本进行对比</span>
-        <div class="t1">
-            <span v-for="item in t1_dom.split('')">{{ item }}</span>
-        </div>
-        <div class="t2" v-html="t2_dom"></div>
-    </div>
-</div>
+    <script>
+        const { createApp } = Vue
 
-<script>
-    const {createApp} = Vue
-
-    createApp({
-        data() {
-            return {
-                type: true,
-                t1: '',
-                t2: ''
-            }
-        },
-        computed: {
-            t1_dom() {
-                return this.t1.split("")
-                    .filter(item => item.trim())
-                    .join("")
-            },
-            t2_dom() {
-                var t1 = this.t1.split("")
-                    .filter(item => item.trim())
-                    .join("")
-                var t2 = this.t2.split("")
-                    .filter(item => item.trim())
-                    .join("")
-                var t2_result = []
-                t1.split('').map((item, index) => {
-                    var tag = this.type ?
-                        t2[index] === item :
-                        (t2[index] && t2[index].toLowerCase() === item.toLowerCase())
-                    if (tag) {
-                        t2_result.push(`<span>${t2[index]}</span>`)
-                    } else {
-                        t2_result.push(`<span class="err">${t2[index] || '-'}</span>`)
-                    }
-                })
-                if (t2.length > t1.length) {
-                    var other = t2.substring(t1.length)
-                    t2_result.push("<span class='err'>" + other + "</span>")
+        createApp({
+            data() {
+                return {
+                    type: true,
+                    sortType: false,
+                    t1: '',
+                    t2: ''
                 }
-                return t2_result.join("")
+            },
+            computed: {
+                t1_dom() {
+                    return this.t1.split("")
+                        .filter(item => item.trim())
+                        .join("")
+                },
+                t2_dom() {
+                    var t1 = this.t1.split("")
+                        .filter(item => item.trim())
+                        .join("")
+                    var t2 = this.t2.split("")
+                        .filter(item => item.trim())
+                        .join("")
+                    var t2_result = []
+                    t1.split('').map((item, index) => {
+                        var tag = this.type ?
+                            t2[index] === item :
+                            (t2[index] && t2[index].toLowerCase() === item.toLowerCase())
+                        if (tag) {
+                            t2_result.push(`<span>${t2[index]}</span>`)
+                        } else {
+                            t2_result.push(`<span class="err">${t2[index] || '-'}</span>`)
+                        }
+                    })
+                    if (t2.length > t1.length) {
+                        var other = t2.substring(t1.length)
+                        t2_result.push("<span class='err'>" + other + "</span>")
+                    }
+                    return t2_result.join("")
+                },
+                statistic() {
+                    const word = {}
+
+                    this.t1.split('').map(w => {
+                        if (word[w]) {
+                            word[w]++
+                        } else {
+                            word[w] = 1
+                        }
+                    })
+                    const list = []
+                    Object.keys(word).map(k => {
+                        list.push({
+                            name: k,
+                            count: word[k]
+                        })
+                    })
+
+                    list.sort((a, b) => {
+                        if (this.sortType) {
+                            return a.name.localeCompare(b.name)
+                        }
+                        return b.count - a.count
+                    })
+
+                    return list
+                }
             }
-        }
-    }).mount('#app')
-</script>
+        }).mount('#app')
+    </script>
 </body>
+
 </html>
